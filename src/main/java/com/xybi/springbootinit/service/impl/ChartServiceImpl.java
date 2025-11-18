@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xybi.springbootinit.model.entity.Chart;
 import com.xybi.springbootinit.service.ChartService;
 import com.xybi.springbootinit.mapper.ChartMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
@@ -28,6 +29,9 @@ import java.util.function.Function;
 @Service
 public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 implements ChartService{
+
+    @Autowired
+    ChartMapper chartMapper;
 
     @Override
     public boolean save(Chart entity) {
@@ -217,5 +221,24 @@ implements ChartService{
     @Override
     public boolean saveOrUpdate(Chart entity, Wrapper<Chart> updateWrapper) {
         return super.saveOrUpdate(entity, updateWrapper);
+    }
+
+    @Override
+    public void createChartDataTable(Long id, Chart chart) {
+        // 构造表名
+        String tableName = "chart_" + id;
+
+        // 创建数据表
+        chartMapper.createChartTable(tableName);
+
+        // 插入数据
+        chartMapper.insertChartData(tableName, chart);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryChartData(Long id) {
+        String querySql = String.format("select * from chart_%s", id);
+        List<Map<String, Object>> resultData = chartMapper.queryChartData(querySql);
+        return resultData;
     }
 }

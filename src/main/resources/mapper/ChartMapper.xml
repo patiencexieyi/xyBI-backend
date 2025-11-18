@@ -21,4 +21,41 @@
         id,goal,chartData,chartType,genChart,genResult,
         userId,createTime,updateTime,isDelete
     </sql>
+
+    <!-- 创建图表数据表 -->
+    <update id="createChartTable" parameterType="string">
+        CREATE TABLE IF NOT EXISTS ${tableName} (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            chart_name VARCHAR(255),
+            goal VARCHAR(255),
+            chart_data LONGTEXT,
+            gen_chart LONGTEXT,
+            chart_type VARCHAR(255),
+            gen_result LONGTEXT,
+            created_time DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+    </update>
+
+    <!-- 插入图表数据 -->
+    <!-- 插入图表完整数据 -->
+    <insert id="insertChartData" parameterType="map">
+        INSERT INTO ${tableName} (chart_name, goal, chart_data, gen_chart, chart_type, gen_result)
+        VALUES (#{chart.name}, #{chart.goal}, #{chart.chartData}, #{chart.genChart}, #{chart.chartType}, #{chart.genResult})
+    </insert>
+
+    <!--
+        queryChartData唯一标识符;parameterType查询语句的参数类型,类型为字符串;
+        resultType查询结果的返回类型,类型为map类型;
+        ${querySql}是SQL查询语句的占位符;
+        select * from chart_#{chartId} 不够灵活,${querySql}是最灵活的方式，
+        就是把sql语句完全交给程序去传递，有一定的风险;
+        一旦使用$符号，就有sql注入的风险。
+    -->
+    <select id="queryChartData" parameterType="string" resultType="map">
+        ${querySql}
+    </select>
+    <!--
+        可以在程序里面去做校验。只要保证这个SQL是通过你的后端生成的，
+        在生成的过程中做了校验，就不会有这种漏洞的风险。
+    -->
 </mapper>

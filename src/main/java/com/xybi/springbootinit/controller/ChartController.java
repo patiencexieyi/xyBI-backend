@@ -37,6 +37,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 帖子接口
@@ -75,8 +76,14 @@ public class ChartController {
         BeanUtils.copyProperties(chartAddRequest, chart);
         User loginUser = userService.getLoginUser(request);
         chart.setUserId(loginUser.getId());
+        //保存图表信息
         boolean result = chartService.save(chart);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 如果有原始数据，则创建独立表存储
+        if (StringUtils.isNotBlank(chartAddRequest.getChartData())) {
+            // 创建动态表存储原始数据
+            chartService.createChartDataTable(chart.getId(), chart);
+        }
         long newChartId = chart.getId();
         return ResultUtils.success(newChartId);
     }
@@ -136,11 +143,12 @@ public class ChartController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<Chart> getChartById(long id, HttpServletRequest request) {
+    public BaseResponse<List<Map<String, Object>>> getChartById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Chart chart = chartService.getById(id);
+//        Chart chart = chartService.getById(id);
+        List<Map<String, Object>> chart = chartService.queryChartData(id);
         if (chart == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -292,7 +300,7 @@ public class ChartController {
          */
         String suffix = FileUtil.getSuffix(originalFilename);
         // 定义合法的后缀列表
-        final List<String> validFileSuffixList = Arrays.asList("png", "jpg", "svg", "webp", "jpeg");
+        final List<String> validFileSuffixList = Arrays.asList("png", "jpg", "csv", "xlsx", "jpeg");
         // 如果suffix的后缀不在List的范围内,抛出异常,并提示'文件后缀非法'
         ThrowUtils.throwIf(!validFileSuffixList.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀非法");
 
@@ -360,6 +368,14 @@ public class ChartController {
         boolean saveResult = chartService.save(chart);
         // 如果为假，抛出异常，并提示"图表保存失败"
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+
+        // 将所有相关数据存储到独立表中
+        try {
+            chartService.createChartDataTable(chart.getId(), chart);
+        } catch (Exception e) {
+            log.error("创建独立表失败，图表ID: {}", chart.getId(), e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建数据表失败");
+        }
 
         // 最后封装到BiResponse里
         BiResponse biResponse = new BiResponse();
