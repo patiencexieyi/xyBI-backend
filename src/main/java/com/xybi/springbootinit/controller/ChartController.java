@@ -22,6 +22,7 @@ import com.xybi.springbootinit.model.dto.chart.ChartUpdateRequest;
 import com.xybi.springbootinit.model.dto.file.GenChartByAiRequest;
 import com.xybi.springbootinit.model.entity.Chart;
 import com.xybi.springbootinit.model.entity.User;
+import com.xybi.springbootinit.model.enums.ChartStatusEnum;
 import com.xybi.springbootinit.model.vo.BiResponse;
 import com.xybi.springbootinit.service.ChartService;
 import com.xybi.springbootinit.service.UserService;
@@ -43,7 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * 帖子接口
+ * 智能分析接口
  */
 @RestController
 @RequestMapping("/chart")
@@ -67,7 +68,6 @@ public class ChartController {
 
     private final static Gson GSON = new Gson();
 
-    // region 增删改查
 
     /**
      * 创建
@@ -323,6 +323,7 @@ public class ChartController {
         chart.setChartType(chartType);
         chart.setGenChart(genChart);
         chart.setGenResult(genResult);
+        chart.setStatus(ChartStatusEnum.SUCCEED.getValue());
         chart.setUserId(loginUser.getId());
         boolean saveResult = chartService.save(chart);
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
@@ -416,7 +417,7 @@ public class ChartController {
         chart.setChartData(csvData);
         chart.setChartType(chartType);
         // 设置任务状态为排队中
-        chart.setStatus("wait");
+        chart.setStatus(ChartStatusEnum.WAIT.getValue());
         chart.setUserId(loginUser.getId());
         boolean saveResult = chartService.save(chart);
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
@@ -424,14 +425,11 @@ public class ChartController {
         // 在最终的返回结果前提交一个任务
         // todo 建议处理任务队列满了后,抛异常的情况(因为提交任务报错了,前端会返回异常)
         CompletableFuture.runAsync(() -> {
-            System.out.println("异步任务开始执行，线程: " + Thread.currentThread().getName());
-            // 添加日志输出帮助调试
-            log.info("异步任务执行中...");
             // 先修改图表任务状态为 “执行中”。等执行成功后，修改为 “已完成”、保存执行结果；执行失败后，状态修改为 “失败”，记录任务失败信息。(为了防止同一个任务被多次执行)
             Chart updateChart = new Chart();
             updateChart.setId(chart.getId());
             // 把任务状态改为执行中
-            updateChart.setStatus("running");
+            updateChart.setStatus(ChartStatusEnum.RUNNING.getValue());
             boolean b = chartService.updateById(updateChart);
             // 如果提交失败(一般情况下,更新失败可能意味着你的数据库出问题了)
             if (!b) {
@@ -452,11 +450,20 @@ public class ChartController {
             updateChartResult.setId(chart.getId());
             updateChartResult.setGenChart(genChart);
             updateChartResult.setGenResult(genResult);
-            updateChartResult.setStatus("succeed");
+            updateChartResult.setStatus(ChartStatusEnum.SUCCEED.getValue());
             boolean updateResult = chartService.updateById(updateChartResult);
             if (!updateResult) {
                 handleChartUpdateError(chart.getId(), "更新图表成功状态失败");
             }
+//            //增加分库图表
+//            Chart addchart = new Chart();
+//            BeanUtils.copyProperties(updateChartResult, addchart);
+//            addchart.setUserId(loginUser.getId());
+//            // 如果有原始数据，则创建独立表存储
+//            if (StringUtils.isNotBlank(updateChartResult.getChartData())) {
+//                // 创建动态表存储原始数据
+//                chartService.createChartDataTable(addchart.getId(), addchart);
+//            }
         }, threadPoolExecutor);
 
         BiResponse biResponse = new BiResponse();
@@ -468,7 +475,7 @@ public class ChartController {
     private void handleChartUpdateError(long chartId, String execMessage) {
         Chart updateChartResult = new Chart();
         updateChartResult.setId(chartId);
-        updateChartResult.setStatus("failed");
+        updateChartResult.setStatus(ChartStatusEnum.FAILED.getValue());
         updateChartResult.setExecMessage(execMessage);
         boolean updateResult = chartService.updateById(updateChartResult);
         if (!updateResult) {

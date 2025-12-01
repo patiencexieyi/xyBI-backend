@@ -11,6 +11,8 @@
             <result property="chartType" column="chartType" />
             <result property="genChart" column="genChart" />
             <result property="genResult" column="genResult" />
+            <result property="status" column="status" />
+            <result property="execMessage" column="execMessage" />
             <result property="userId" column="userId" />
             <result property="createTime" column="createTime" />
             <result property="updateTime" column="updateTime" />
@@ -18,8 +20,8 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,goal,chartData,chartType,genChart,genResult,
-        userId,createTime,updateTime,isDelete
+        id,goal,chartData,chartType,genChart,genResult,status,
+        execMessage,userId,createTime,updateTime,isDelete
     </sql>
 
     <!-- 创建图表数据表 -->
