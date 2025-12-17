@@ -17,4 +17,5 @@ public interface ChartService extends IService<Chart> {
 
     List<Map<String, Object>> queryChartData(Long id);
 
+    void handleChartUpdateError(long chartId, String execMessage);
 }

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.kotlin.KtQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.kotlin.KtUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xybi.springbootinit.model.entity.Chart;
+import com.xybi.springbootinit.model.enums.ChartStatusEnum;
 import com.xybi.springbootinit.service.ChartService;
 import com.xybi.springbootinit.mapper.ChartMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -240,5 +241,17 @@ implements ChartService{
         String querySql = String.format("select * from chart_%s", id);
         List<Map<String, Object>> resultData = chartMapper.queryChartData(querySql);
         return resultData;
+    }
+
+    @Override
+    public void handleChartUpdateError(long chartId, String execMessage) {
+        Chart updateChartResult = new Chart();
+        updateChartResult.setId(chartId);
+        updateChartResult.setStatus(ChartStatusEnum.FAILED.getValue());
+        updateChartResult.setExecMessage(execMessage);
+        boolean updateResult = updateById(updateChartResult);
+        if (!updateResult) {
+            log.error("更新图表失败状态失败" + chartId + "," + execMessage);
+        }
     }
 }
