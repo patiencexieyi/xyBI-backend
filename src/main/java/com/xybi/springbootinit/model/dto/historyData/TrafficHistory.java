@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("traffic_history")
+@TableName("trafficHistory")
 public class TrafficHistory {
     @TableId(type = IdType.AUTO)
     private Long id;

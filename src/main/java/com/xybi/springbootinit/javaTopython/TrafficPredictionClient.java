@@ -8,7 +8,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -25,11 +24,10 @@ public class TrafficPredictionClient {
      * @param city 目标城市
      * @param startDate 预测开始日期（YYYY-MM-DD）
      * @param historyDataList 21天历史数据（每个元素是Map，包含所有特征）
-     * @param savePath CSV保存路径
      * @return CSV文件保存路径
      * @throws IOException 网络/文件异常
      */
-    public static String predict(String city, String startDate, List<Map<String, Object>> historyDataList, String savePath) throws IOException {
+    public static String predict(String city, String startDate, List<Map<String, Object>> historyDataList) throws IOException {
         // 构建请求 - 使用Java 8兼容的方式创建Map
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("city", city);
@@ -44,22 +42,31 @@ public class TrafficPredictionClient {
                 .post(body)
                 .build();
 
+//        try (Response response = HTTP_CLIENT.newCall(httpRequest).execute()) {
+//            if (!response.isSuccessful()) {
+//                throw new IOException("API调用失败：" + response.code() + " - " + response.message());
+//            }
+//
+//            // 使用响应类解析
+//            String jsonResponse = response.body().string();
+//            PredictionResponse predictionResponse = OBJECT_MAPPER.readValue(jsonResponse, PredictionResponse.class);
+//
+//            // 保存CSV文件
+////            String fullSavePath = savePath + predictionResponse.getFilename();
+////            try (FileWriter writer = new FileWriter(fullSavePath, false)) {
+////                writer.write(predictionResponse.getCsvData());
+////            }
+//
+//            return fullSavePath;
+//        }
         try (Response response = HTTP_CLIENT.newCall(httpRequest).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException("API调用失败：" + response.code() + " - " + response.message());
             }
 
-            // 使用响应类解析
+            // 解析响应并返回给前端
             String jsonResponse = response.body().string();
-            PredictionResponse predictionResponse = OBJECT_MAPPER.readValue(jsonResponse, PredictionResponse.class);
-
-            // 保存CSV文件
-            String fullSavePath = savePath + predictionResponse.getFilename();
-            try (FileWriter writer = new FileWriter(fullSavePath, false)) {
-                writer.write(predictionResponse.getCsvData());
-            }
-
-            return fullSavePath;
+            return String.valueOf(OBJECT_MAPPER.readValue(jsonResponse, PredictionResponse.class));
         }
     }
 }

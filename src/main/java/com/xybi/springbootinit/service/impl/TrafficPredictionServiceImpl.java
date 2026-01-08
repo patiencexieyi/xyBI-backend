@@ -24,7 +24,7 @@ public class TrafficPredictionServiceImpl implements TrafficPredictionService {
     private TrafficHistoryService trafficHistoryService;
 
     @Override
-    public String predict7DaysTraffic(String city, String startDate, String savePath) throws Exception {
+    public String predict7DaysTraffic(String city, String startDate) throws Exception {
         // 1. 查询21天历史数据
         List<TrafficHistory> historyList = trafficHistoryService.get21DaysData(city, LocalDate.parse(startDate));
         if (historyList.size() != 21) {
@@ -68,6 +68,6 @@ public class TrafficPredictionServiceImpl implements TrafficPredictionService {
         }
 
         // 3. 调用API
-        return TrafficPredictionClient.predict(city, startDate, historyDataList, savePath);
+        return TrafficPredictionClient.predict(city, startDate, historyDataList);
     }
 }

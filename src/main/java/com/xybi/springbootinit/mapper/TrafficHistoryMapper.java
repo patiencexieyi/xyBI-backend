@@ -15,7 +15,7 @@ public interface TrafficHistoryMapper extends BaseMapper<TrafficHistory> {
      * @param endDate 结束日期（默认当天）
      * @return 21天数据列表
      */
-    @Select("SELECT * FROM traffic_history " +
+    @Select("SELECT * FROM trafficHistory " +
             "WHERE city = #{city} AND date >= DATE_SUB(#{endDate}, INTERVAL 20 DAY) AND date <= #{endDate} " +
             "ORDER BY date ASC")
     List<TrafficHistory> select21DaysByCity(@Param("city") String city, @Param("endDate") LocalDate endDate);
