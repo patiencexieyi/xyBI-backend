@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -287,7 +288,7 @@ public class ChartController {
         ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "文件超过 1M");
         // 校验文件后缀 aaa.png
         String suffix = FileUtil.getSuffix(originalFilename);
-        final List<String> validFileSuffixList = Arrays.asList("xlsx", "xls");
+        final List<String> validFileSuffixList = Arrays.asList("xlsx", "xls", "csv");
         ThrowUtils.throwIf(!validFileSuffixList.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀非法");
 
         User loginUser = userService.getLoginUser(request);
@@ -307,7 +308,19 @@ public class ChartController {
         userInput.append(userGoal).append("\n");
         userInput.append("原始数据：").append("\n");
         // 压缩后的数据
-        String csvData = ExcelUtils.excelToCsv(multipartFile);
+        // 根据文件类型决定是否转换
+        String csvData;
+        if ("csv".equalsIgnoreCase(suffix)) {
+            // 如果是CSV文件，直接读取内容
+            try {
+                csvData = new String(multipartFile.getBytes());
+            } catch (IOException e) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "读取CSV文件失败");
+            }
+        } else {
+            // 如果是Excel文件，转换为CSV
+            csvData = ExcelUtils.excelToCsv(multipartFile);
+        }
         userInput.append(csvData).append("\n");
         //调用AI
         String result = aiManager.doChat(biModelId, userInput.toString());
@@ -409,7 +422,18 @@ public class ChartController {
         userInput.append(userGoal).append("\n");
         userInput.append("原始数据：").append("\n");
         // 压缩后的数据（把multipartFile传进来）
-        String csvData = ExcelUtils.excelToCsv(multipartFile);
+        String csvData;
+        if ("csv".equalsIgnoreCase(suffix)) {
+            // 如果是CSV文件，直接读取内容
+            try {
+                csvData = new String(multipartFile.getBytes());
+            } catch (IOException e) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "读取CSV文件失败");
+            }
+        } else {
+            // 如果是Excel文件，转换为CSV
+            csvData = ExcelUtils.excelToCsv(multipartFile);
+        }
         userInput.append(csvData).append("\n");
 
         // 先把图表保存到数据库中
@@ -483,7 +507,7 @@ public class ChartController {
      */
     @PostMapping("/gen/async/mq")
     public BaseResponse<BiResponse> genChartByAiAsyncMq(@RequestPart("file") MultipartFile multipartFile,
-                                                      GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+                                                        GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
@@ -540,7 +564,18 @@ public class ChartController {
         userInput.append(userGoal).append("\n");
         userInput.append("原始数据：").append("\n");
         // 压缩后的数据（把multipartFile传进来）
-        String csvData = ExcelUtils.excelToCsv(multipartFile);
+        String csvData;
+        if ("csv".equalsIgnoreCase(suffix)) {
+            // 如果是CSV文件，直接读取内容
+            try {
+                csvData = new String(multipartFile.getBytes());
+            } catch (IOException e) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "读取CSV文件失败");
+            }
+        } else {
+            // 如果是Excel文件，转换为CSV
+            csvData = ExcelUtils.excelToCsv(multipartFile);
+        }
         userInput.append(csvData).append("\n");
 
         // 先把图表保存到数据库中
