@@ -31,7 +31,6 @@ public class TrafficDataController {
 
     /**
      * 查询指定城市近21天数据（供预测使用）
-     * 示例：http://localhost:8080/api/traffic/21days/北京
      */
     @GetMapping("/21days/{city}")
     public List<TrafficHistory> get21DaysData(
@@ -55,7 +54,7 @@ public class TrafficDataController {
             return ResultUtils.success(response);
         } catch (Exception e) {
             log.error("预测7天车流量失败", e);
-            return ResultUtils.error(ErrorCode.valueOf("预测失败: " + e.getMessage()));
+            return ResultUtils.error(ErrorCode.OPERATION_ERROR, "预测失败: " + e.getMessage());
         }
     }
 }

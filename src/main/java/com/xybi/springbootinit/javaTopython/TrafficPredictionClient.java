@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TrafficPredictionClient {
-    private static final String API_URL = "http://localhost:8000/predict_7days";
+    private static final String API_URL = "http://192.168.203.128:8000/predict_7days";
     private static final OkHttpClient HTTP_CLIENT = new OkHttpClient();
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
